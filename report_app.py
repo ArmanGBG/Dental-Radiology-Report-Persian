@@ -55,7 +55,8 @@ def init_cbct_state():
     st.session_state.septum_deviation = "۱. راست"
     st.session_state.septum_area = "۱. استخوانی"
     st.session_state.nasal_spur = "۲. مشاهده نمی شود"
-    st.session_state.osteum_status = "۱. باز"
+    st.session_state.osteum_status_right = "نامشخص"
+    st.session_state.osteum_status_left = "نامشخص"
     st.session_state.concha_occurrence = "۲. مشاهده نمی شود"
     st.session_state.concha_side = "۱. راست"
     st.session_state.haller_cells = "۲. مشاهده نمی شود"
@@ -78,11 +79,11 @@ def init_surgery_state():
     st.session_state.apex_pos_superior = False
     st.session_state.apex_pos_inferior = False
     st.session_state.apex_pos_buccal = False
-    st.session_state.apex_pos_lingual = False
+    st.session_state.apex_pos_lingual = False # <--- (متغیر داخلی، املایش مهم نیست)
     st.session_state.paresthesia_risk = "ندارد"
     st.session_state.fracture_risk = "ندارد"
     st.session_state.plate_pos_buccal = False
-    st.session_state.plate_pos_lingual = False
+    st.session_state.plate_pos_lingual = False # <--- (متغیر داخلی، املایش مهم نیست)
     st.session_state.submandibular_risk = "ندارد"
     st.session_state.decay_status = "بسته است"
     st.session_state.resorption_status = "نشده است"
@@ -92,7 +93,7 @@ def init_surgery_state():
 
 # راه‌اندازی اولیه برنامه
 if 'app_mode' not in st.session_state:
-    st.session_state.app_mode = "main"  # <--- صفحه اصلی
+    st.session_state.app_mode = "main"
     init_cbct_state()
     init_endo_state()
     init_surgery_state()
@@ -100,16 +101,13 @@ if 'app_mode' not in st.session_state:
 # --- بخش ۳: توابع ناوبری (Navigation) ---
 
 def navigate_to(mode):
-    """تابع برای جابجایی بین صفحات و ریست کردن فرم‌ها"""
     st.session_state.app_mode = mode
-    # با هر بار جابجایی، هر سه فرم ریست می‌شوند
     init_cbct_state()
     init_endo_state()
     init_surgery_state()
 
 # --- چارت دندانی (به عنوان یک تابع مشترک) ---
 def draw_dental_chart(on_click_function_name):
-    """یک چارت دندانی قابل کلیک رسم می‌کند و نام تابع کلیک را می‌گیرد"""
     upper_right_teeth = [18, 17, 16, 15, 14, 13, 12, 11]
     upper_left_teeth = [21, 22, 23, 24, 25, 26, 27, 28]
     lower_left_teeth = [31, 32, 33, 34, 35, 36, 37, 38]
@@ -145,30 +143,15 @@ if st.session_state.app_mode == "main":
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.button(
-            "📄 گزارش CBCT",
-            on_click=navigate_to,
-            args=("cbct",),
-            use_container_width=True, type="primary"
-        )
+        st.button("📄 گزارش CBCT", on_click=navigate_to, args=("cbct",), use_container_width=True, type="primary")
         st.caption("برای گزارش‌های مربوط به سینوس، سپتوم و آناتومی کلی.")
         
     with col2:
-        st.button(
-            "🦷 گزارش Endo (طول کانال)",
-            on_click=navigate_to,
-            args=("endo",),
-            use_container_width=True, type="primary"
-        )
-        st.caption("برای بررسی طول کرکرد کانال‌ها در درمان ریشه.")
+        st.button("🦷 گزارش Endo (طول کانال)", on_click=navigate_to, args=("endo",), use_container_width=True, type="primary")
+        st.caption("برای بررسی طول کارکرد کانال‌ها در درمان ریشه.")
         
     with col3:
-        st.button(
-            " surgically مولد گزارش جراحی",
-            on_click=navigate_to,
-            args=("surgery",),
-            use_container_width=True, type="primary"
-        )
+        st.button(" surgically مولد گزارش جراحی", on_click=navigate_to, args=("surgery",), use_container_width=True, type="primary")
         st.caption("برای بررسی‌های قبل از جراحی دندان عقل.")
 
 # ==================================================================
@@ -199,7 +182,8 @@ elif st.session_state.app_mode == "cbct":
     with col2:
         st.subheader("بخش ۲: یافته‌های دیگر")
         with st.expander("استئوم سینوس ماگزیلاری", expanded=True):
-            st.radio("وضعیت استئوم:", ("۱. باز", "۲. بسته"), key="osteum_status", horizontal=True)
+            st.radio("وضعیت استئوم راست:", ("باز", "بسته", "نامشخص"), key="osteum_status_right", horizontal=True, index=2)
+            st.radio("وضعیت استئوم چپ:", ("باز", "بسته", "نامشخص"), key="osteum_status_left", horizontal=True, index=2)
         with st.expander("Concha Bullosa", expanded=True):
             st.radio("وضعیت Concha Bullosa:", ("۱. مشاهده میشود", "۲. مشاهده نمی شود"), key="concha_occurrence", horizontal=True)
             if st.session_state.concha_occurrence == "۱. مشاهده میشود":
@@ -224,8 +208,7 @@ elif st.session_state.app_mode == "cbct":
             report_lines.append(f". انحراف سپتوم بینی به سمت **{clean_deviation}** در ناحیه **{clean_area}** مشاهده می گردد.")
         clean_spur = st.session_state.nasal_spur.split('. ')[-1]
         report_lines.append(f". در سپتوم بینی Nasal Spur **{clean_spur}**.")
-        clean_osteum = st.session_state.osteum_status.split('. ')[-1]
-        report_lines.append(f". استئوم سینوس ماگزیلاری **{clean_osteum}** می باشد.")
+        report_lines.append(f". استئوم سینوس ماگزیلاری راست **{st.session_state.osteum_status_right}** و چپ **{st.session_state.osteum_status_left}** می باشد.")
         clean_concha_occurrence = st.session_state.concha_occurrence.split('. ')[-1]
         if clean_concha_occurrence == "مشاهده میشود":
             clean_concha_side = st.session_state.concha_side.split('. ')[-1] 
@@ -272,7 +255,7 @@ elif st.session_state.app_mode == "endo":
     else:
         st.info("لطفا یک دندان از چارت زیر انتخاب کنید.")
     st.caption("چارت بر اساس شماره‌گذاری استاندارد FDI")
-    draw_dental_chart(endo_select_tooth) # <--- استفاده از تابع مشترک چارت
+    draw_dental_chart(endo_select_tooth) 
     st.divider()
 
     if st.session_state.endo_tooth_id:
@@ -314,12 +297,15 @@ elif st.session_state.app_mode == "endo":
             for canal in st.session_state.endo_canals:
                 if canal["name"] == "... سایر (تایپ دستی)" and not canal["custom_name"]:
                     st.error("لطفاً نام کانال سفارشی (سایر) را وارد کنید."); error_found = True; break
+            
             if not error_found:
                 report_lines = []
                 report_lines.append("با سلام و احترام\nخدمت همکار گرامی جناب آقای دکتر/خانم دکتر ...\n")
                 fdi_id = st.session_state.endo_tooth_id
-                report_lines.append(f"در بررسی رادیوگرافی به عمل آمده از **دندان {fdi_id}** پیشنهاد می گردد طول کرکرد کانال:")
-                needs_correction = False
+                
+                # --- اصلاح ۱: «کرکرد» به «کارکرد» ---
+                report_lines.append(f"در بررسی رادیوگرافی به عمل آمده از **دندان {fdi_id}** پیشنهاد می گردد طول کارکرد کانال:")
+                
                 for canal in st.session_state.endo_canals:
                     canal_name = canal["custom_name"] if canal["name"] == "... سایر (تایپ دستی)" else canal["name"]
                     canal_status = canal["status"]
@@ -327,13 +313,16 @@ elif st.session_state.app_mode == "endo":
                     if canal_status == "مناسب":
                         report_lines.append(f"• **{canal_name}** : **مناسب** می باشد.")
                     else:
-                        needs_correction = True
                         if canal_measurement:
                             report_lines.append(f"• **{canal_name}** : به اندازه **{canal_measurement}mm** **{canal_status}** گردد.")
                         else:
                             report_lines.append(f"• **{canal_name}** : **{canal_status}** گردد.")
+                
                 report_lines.append("")
-                if not needs_correction: report_lines.append("تمامی طول‌های کرکرد بررسی شده مناسب به نظر می‌رسند.")
+                
+                # --- اصلاح ۲: حذف جمله اضافی ---
+                # (جمله "تمامی طول‌های کارکرد..." از اینجا حذف شد)
+                
                 report_lines.append("\nبا تشکر")
                 st.session_state.endo_generated_report = "\n".join(report_lines)
                 st.success("گزارش Endo با موفقیت تولید شد!")
@@ -356,7 +345,7 @@ elif st.session_state.app_mode == "surgery":
         st.session_state.surgery_generated_report = "" 
         
     def surgery_reset_form():
-        init_surgery_state() # فقط استیت جراحی را ریست می‌کند
+        init_surgery_state() 
         
     # --- UI اصلی Surgery ---
     st.title(" surgically مولد گزارش جراحی (دندان عقل)")
@@ -368,7 +357,7 @@ elif st.session_state.app_mode == "surgery":
         st.success(f"**دندان انتخاب شده: {st.session_state.surgery_tooth_id}**")
     else:
         st.info("لطفا یک دندان از چارت زیر انتخاب کنید.")
-    draw_dental_chart(surgery_select_tooth) # <--- استفاده از تابع مشترک چارت
+    draw_dental_chart(surgery_select_tooth) 
     st.divider()
 
     if st.session_state.surgery_tooth_id:
@@ -402,7 +391,10 @@ elif st.session_state.app_mode == "surgery":
         with col_pos1: st.checkbox("مجاورت فوقانی (Superior)", key="apex_pos_superior")
         with col_pos2: st.checkbox("مجاورت تحتانی (Inferior)", key="apex_pos_inferior")
         with col_pos3: st.checkbox("باکالی (Buccal)", key="apex_pos_buccal")
-        with col_pos4: st.checkbox("لینگالی (Lingual)", key="apex_pos_lingual")
+        
+        # --- 🚀 اصلاح املایی ۱: لینگالی به لینگوال ---
+        with col_pos4: st.checkbox("لینگوال (Lingual)", key="apex_pos_lingual")
+        
         st.write("کانال عصبی فک تحتانی قرار گرفته است.")
         col_risk1, col_risk2 = st.columns(2)
         with col_risk1: st.radio("و احتمال پاراستزی وجود:", ("دارد", "ندارد"), key="paresthesia_risk", horizontal=True, index=1)
@@ -415,7 +407,7 @@ elif st.session_state.app_mode == "surgery":
         st.write("دندان مورد نظر در مجاورت جداره (کورتکس):")
         col_plate1, col_plate2, col_plate3 = st.columns([2, 2, 5])
         with col_plate1: st.checkbox("باکال", key="plate_pos_buccal")
-        with col_plate2: st.checkbox("لینگوال", key="plate_pos_lingual")
+        with col_plate2: st.checkbox("لینگوال", key="plate_pos_lingual") # (اینجا از قبل درست بود)
         with col_plate3: st.write("قرار گرفته است.")
         st.radio("و احتمال نفوذ به فضای تحت فکی (Submandibular) حین جراحی وجود:", ("دارد", "ندارد"), key="submandibular_risk", horizontal=True, index=1)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -436,15 +428,15 @@ elif st.session_state.app_mode == "surgery":
         with col_resorp2: st.radio("وضعیت تحلیل:", ("شده است", "نشده است"), key="resorption_status", horizontal=True, index=1, label_visibility="collapsed")
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # --- بخش ۸: PDL و انکلوز ---
+        # --- 🚀 بخش ۸: PDL و انکیلوز (اصلاح املایی) ---
         st.markdown('<div class="form-section">', unsafe_allow_html=True)
-        st.subheader("۸. بررسی PDL و انکلوز")
+        st.subheader("۸. بررسی PDL و انکیلوز") # <--- اصلاح املایی
         col_pdl1, col_pdl2, col_pdl3 = st.columns([1, 2, 4])
         with col_pdl1: st.write("باتوجه به:")
         with col_pdl2: st.radio("PDL", ("مشاهده", "عدم مشاهده"), key="pdl_status", horizontal=True, label_visibility="collapsed")
         with col_pdl3: st.write("فضای PDL،")
         col_ank1, col_ank2 = st.columns([1, 2])
-        with col_ank1: st.write("احتمال انکلوز وجود:")
+        with col_ank1: st.write("احتمال انکیلوز وجود:") # <--- اصلاح املایی
         with col_ank2: st.radio("Ankylosis", ("دارد", "ندارد"), key="ankylosis_risk", horizontal=True, index=1, label_visibility="collapsed")
         st.markdown('</div>', unsafe_allow_html=True)
         st.divider()
@@ -469,15 +461,29 @@ elif st.session_state.app_mode == "surgery":
             else:
                 report_lines.append(f"• دندان مورد نظر دارای **{root_count}** ریشه بوده و ریشه‌ها **{morphology_text}** می باشند.")
             
+            # --- 🚀 منطق اصلاح شده پاراستزی و شکستگی ---
             selected_positions = []
             if st.session_state.apex_pos_superior: selected_positions.append("مجاورت فوقانی")
             if st.session_state.apex_pos_inferior: selected_positions.append("مجاورت تحتانی")
             if st.session_state.apex_pos_buccal: selected_positions.append("باکالی")
-            if st.session_state.apex_pos_lingual: selected_positions.append("لینگالی")
+            
+            # --- 🚀 اصلاح املایی ۲: لینگالی به لینگوال ---
+            if st.session_state.apex_pos_lingual: selected_positions.append("لینگوال")
+            
             position_text = " و ".join(selected_positions);
             if not position_text: position_text = "(موقعیتی انتخاب نشد)"
-            report_lines.append(f"• اپکس ریشه در موقعیت **{position_text}** کانال عصبی فک تحتانی قرار گرفته است و احتمال پاراستزی وجود **{st.session_state.paresthesia_risk}** و احتمال شکستگی ریشه حین جراحی وجود **{st.session_state.fracture_risk}**.")
             
+            p_risk = st.session_state.paresthesia_risk
+            f_risk = st.session_state.fracture_risk
+            risk_sentence = ""
+            if p_risk == f_risk:
+                risk_sentence = f"و احتمال پاراستزی و شکستگی ریشه حین جراحی وجود **{p_risk}**."
+            else:
+                risk_sentence = f"و احتمال پاراستزی وجود **{p_risk}** ولی احتمال شکستگی ریشه حین جراحی وجود **{f_risk}**."
+                
+            report_lines.append(f"• اپکس ریشه در موقعیت **{position_text}** کانال عصبی فک تحتانی قرار گرفته است {risk_sentence}")
+            # --- پایان اصلاح ---
+
             selected_plates = []
             if st.session_state.plate_pos_buccal: selected_plates.append("باکال")
             if st.session_state.plate_pos_lingual: selected_plates.append("لینگوال")
@@ -487,8 +493,10 @@ elif st.session_state.app_mode == "surgery":
             
             report_lines.append(f"• دندان مورد نظر باعث ایجاد پوسیدگی در دندان مجاور **{st.session_state.decay_status}**.")
             report_lines.append(f"• دندان مورد نظر باعث تحلیل ریشه در دندان مجاور **{st.session_state.resorption_status}**.")
-            report_lines.append(f"• باتوجه به **{st.session_state.pdl_status}** فضای PDL، احتمال انکلوز وجود **{st.session_state.ankylosis_risk}**.")
             
+            # --- 🚀 اصلاح املایی انکیلوز ---
+            report_lines.append(f"• باتوجه به **{st.session_state.pdl_status}** فضای PDL، احتمال انکیلوز وجود **{st.session_state.ankylosis_risk}**.")
+
             report_lines.append("\nبا احترام")
             st.session_state.surgery_generated_report = "\n".join(report_lines)
             st.success("گزارش با موفقیت تولید شد!")
