@@ -2,12 +2,12 @@ name: Build Windows EXE
 
 on:
   push:
-    branches: [ "main" ]  # هر وقت کدی را به شاخه اصلی بفرستید، این اجرا می‌شود
-  workflow_dispatch:      # این اجازه می‌دهد دستی هم اجرایش کنید
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest  # درخواست یک سرور ویندوزی
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -15,35 +15,20 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10' # نسخه پایتون
+        python-version: '3.10'
 
     - name: Install Dependencies
       run: |
         pip install streamlit streamlit-option-menu pyinstaller
 
-    - name: Create Entry Point (run_app.py)
-      # این مرحله فایل استارت را به صورت خودکار می‌سازد
+    - name: Build EXE
+      # این دستور فایل‌های شما را تبدیل به نرم‌افزار ویندوز می‌کند
+      # نکته مهم: ما فایل main.py را هم به داخل نرم‌افزار اضافه می‌کنیم
       run: |
-        echo import streamlit.web.cli as stcli > run_app.py
-        echo import os, sys >> run_app.py
-        echo def resolve_path(path): >> run_app.py
-        echo     if getattr(sys, "frozen", False): >> run_app.py
-        echo         basedir = sys._MEIPASS >> run_app.py
-        echo     else: >> run_app.py
-        echo         basedir = os.path.dirname(__file__) >> run_app.py
-        echo     return os.path.join(basedir, path) >> run_app.py
-        echo if __name__ == "__main__": >> run_app.py
-        echo     sys.argv = ["streamlit", "run", resolve_path("main.py"), "--global.developmentMode=false"] >> run_app.py
-        echo     sys.exit(stcli.main()) >> run_app.py
-
-    - name: Build EXE with PyInstaller
-      # دستور ساخت فایل اجرایی
-      run: |
-        pyinstaller --noconfirm --onefile --windowed --name "RadiologyReport" --hidden-import=streamlit --collect-all=streamlit --collect-all=streamlit_option_menu run_app.py
+        pyinstaller --noconfirm --onefile --windowed --name "RadiologyReport" --add-data "main.py;." --hidden-import=streamlit --collect-all=streamlit --collect-all=streamlit_option_menu run_app.py
 
     - name: Upload Artifact
-      # آپلود فایل نهایی برای دانلود شما
       uses: actions/upload-artifact@v4
       with:
-        name: Windows-Executable
+        name: Windows-App
         path: dist/RadiologyReport.exe
