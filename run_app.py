@@ -9,10 +9,14 @@ def resolve_path(path):
     return os.path.join(basedir, path)
 
 if __name__ == "__main__":
+    os.environ["STREAMLIT_SERVER_ADDRESS"] = "localhost"
+    os.environ["STREAMLIT_SERVER_HEADLESS"] = "true"
+    # فایل اصلی main.py است
     sys.argv = [
         "streamlit",
         "run",
         resolve_path("main.py"),
         "--global.developmentMode=false",
+        "--server.address=localhost",
     ]
     sys.exit(stcli.main())
